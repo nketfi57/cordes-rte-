@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventaire Cordes RTE - Mise à jour automatique</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        h1 {
+            color: #2d3748;
+            font-size: 2em;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .live-badge {
+            background: #48bb78;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.5em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+        }
+
+        .last-update {
+            color: #718096;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .subtitle {
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .upload-section {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .upload-zone {
+            background: rgba(255,255,255,0.2);
+            border: 3px dashed white;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 15px;
+        }
+
+        .upload-zone:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.02);
+        }
+
+        .upload-zone.dragover {
+            background: rgba(255,255,255,0.4);
+            border-color: #48bb78;
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .stat-card.warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            animation: alertPulse 2s infinite;
+        }
+
+        @keyframes alertPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .stat-card.danger {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .stat-card.success {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+        }
+
+        .stat-number {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .email-section {
+            background: linear-gradient(135deg, #e0f7fa 0%, #e1f5fe 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 2px solid #00bcd4;
+        }
+
+        .email-section h3 {
+            color: #006064;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .email-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .email-input-wrapper {
+            position: relative;
+        }
+
+        .email-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #00bcd4;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        .email-input:focus {
+            outline: none;
+            border-color: #0097a7;
+            box-shadow: 0 0 0 3px rgba(0,188,212,0.1);
+        }
+
+        .email-input.valid {
+            border-color: #48bb78;
+        }
+
+        .auto-send-toggle {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: #cbd5e0;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #48bb78;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            left: 33px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1em;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(72,187,120,0.3);
+        }
+
+        .btn-secondary {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #3182ce;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(66,153,225,0.3);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            padding: 12px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .filter-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .filter-btn:not(.active) {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-weight: 500;
+        }
+
+        .alert-danger {
+            background: #fed7d7;
+            color: #742a2a;
+            border-left: 4px solid #e53e3e;
+        }
+
+        .alert-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border-left: 4px solid #48bb78;
+        }
+
+        .alert-info {
+            background: #bee3f8;
+            color: #2c5282;
+            border-left: 4px solid #4299e1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        tbody tr {
+            transition: all 0.2s;
+        }
+
+        tbody tr:hover {
+            background: #f7fafc;
+            transform: scale(1.01);
+        }
+
+        tbody tr.expired {
+            background: #fff5f5;
+        }
+
+        tbody tr.warning {
+            background: #fffaf0;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .status-ok {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-warning {
+            background: #fef5e7;
+            color: #744210;
+        }
+
+        .status-danger {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .status-expired {
+            background: #e53e3e;
+            color: white;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 1000;
+            min-width: 300px;
+        }
+
+        .notification.show {
+            display: block;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .stat-number {
+                font-size: 2em;
+            }
+
+            table {
+                font-size: 0.85em;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+    <!-- EmailJS -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script>
+        emailjs.init("GUm4_F5meOo-q6clr");
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                📦 Inventaire Cordes RTE
+                <span class="live-badge">
+                    <span class="pulse-dot"></span>
+                    LIVE
+                </span>
+            </h1>
+            <div class="last-update">
+                🕐 Dernière mise à jour: <strong id="lastUpdate">-</strong>
+            </div>
+        </div>
+
+        <p class="subtitle">Système de surveillance automatique des dates d'expiration</p>
+
+        <!-- Section Upload -->
+        <div class="upload-section">
+            <h3 style="margin-bottom: 10px;">📁 Mise à jour des données</h3>
+            <p style="opacity: 0.9; margin-bottom: 15px;">Glissez-déposez votre fichier CSV mis à jour ou cliquez pour sélectionner</p>
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('csvFile').click()">
+                <div class="upload-icon">📤</div>
+                <div class="upload-text">Cliquez ou glissez votre fichier CSV ici</div>
+                <div class="upload-hint">Le site se mettra à jour automatiquement</div>
+            </div>
+            <input type="file" id="csvFile" accept=".csv,.txt" onchange="handleFileUpload(event)">
+        </div>
+
+        <!-- Statistiques -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalCordes">0</div>
+                <div class="stat-label">Total Cordes</div>
+            </div>
+            <div class="stat-card danger">
+                <div class="stat-number" id="expirees">0</div>
+                <div class="stat-label">Expirées</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-number" id="prochaines30j">0</div>
+                <div class="stat-label">⚠️ < 30 jours</div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-number" id="okCordes">0</div>
+                <div class="stat-label">En bon état</div>
+            </div>
+        </div>
+
+        <!-- Configuration Email -->
+        <div class="email-section">
+            <h3>📧 Configuration des alertes automatiques</h3>
+            
+            <div class="auto-send-toggle">
+                <div>
+                    <strong>Envoi automatique d'emails</strong>
+                    <p style="color: #718096; font-size: 0.9em; margin-top: 5px;">
+                        Les emails seront envoyés automatiquement 30 jours avant expiration
+                    </p>
+                </div>
+                <div class="toggle-switch" id="autoSendToggle" onclick="toggleAutoSend()">
+                    <div class="toggle-slider"></div>
+                </div>
+            </div>
+
+            <p style="color: #006064; margin-bottom: 15px; font-weight: 500;">
+                Entrez les 6 adresses email destinataires :
+            </p>
+            <div class="email-grid">
+                <input type="email" class="email-input" id="email1" placeholder="📧 Email 1" value="" onchange="saveEmails()">
+                <input type="email" class="email-input" id="email2" placeholder="📧 Email 2" value="" onchange="saveEmails()">
+                <input type="email" class="email-input" id="email3" placeholder="📧 Email 3" value="" onchange="saveEmails()">
+                <input type="email" class="email-input" id="email4" placeholder="📧 Email 4" value="" onchange="saveEmails()">
+                <input type="email" class="email-input" id="email5" placeholder="📧 Email 5" value="" onchange="saveEmails()">
+                <input type="email" class="email-input" id="email6" placeholder="📧 Email 6" value="" onchange="saveEmails()">
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="testEmail()">
+                    ✉️ Envoyer un email de test
+                </button>
+                <button class="btn btn-secondary" onclick="checkAlerts()">
+                    🔔 Vérifier les alertes maintenant
+                </button>
+            </div>
+            <div id="emailStatus"></div>
+        </div>
+
+        <!-- Contrôles et filtres -->
+        <div class="controls">
+            <input type="text" class="search-box" id="searchBox" placeholder="🔍 Rechercher (numéro, série, couleur, code...)" onkeyup="filterTable()">
+            <button class="filter-btn active" onclick="filterByStatus('all')">Toutes</button>
+            <button class="filter-btn" onclick="filterByStatus('expired')">Expirées</button>
+            <button class="filter-btn" onclick="filterByStatus('warning')">< 30 jours</button>
+            <button class="filter-btn" onclick="filterByStatus('ok')">OK</button>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <!-- Tableau -->
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>N°</th>
+                        <th>Numéro FT</th>
+                        <th>Série</th>
+                        <th>Couleur</th>
+                        <th>Ø (mm)</th>
+                        <th>Long. (m)</th>
+                        <th>Fabrication</th>
+                        <th>Mise en service</th>
+                        <th>Date expiration</th>
+                        <th>Jours restants</th>
+                        <th>Statut</th>
+                        <th>Code Mainta</th>
+                    </tr>
+                </thead>
+                <tbody id="inventoryTable">
+                    <!-- Données chargées ici -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <div id="notificationContent"></div>
+    </div>
+
+    <script>
+        // Données initiales
+        let inventory = [];
+        let currentFilter = 'all';
+        let autoSendEnabled = false;
+
+        // CSV par défaut
+        const defaultCSV = `NUMERO;NUMERO FT;NUMERO DE SERIE;COULEUR;DIAMETRE;LONGUEUR;DATE DE FABRICATION;MISE EN SERVICE;EMPLACEMENT;CODE MAINTA;FLASH CODE
+1;FT HTB 71 B;982022 222135058100M;ROUGE;14;100;juin-22;01/03/2023;01/03/2025;DIA3-0017483;
+2;FT HTB 71 B;422160005100M;ROUGE;16;100;nov-23;01/10/2024;01/03/2026;DIA3-0017482;
+3;FT HTB 71 B;982022 222135058100M;ROUGE;14;100;juin-22;01/03/2023;01/03/2023;DIA3-0017484;
+4;FT HTB 71 B;988348 422140058100M;ROUGE;14;100;juin-21;01/03/2023;01/03/2025;DIA3-0099123;
+5;FT HTB 71 B;982023 222135038200M;JAUNE;14;100;juil-19;01/03/2023;01/03/2025;DIA1-0099179;
+6;FT HTB 71 B;982025 222135058100M;BICOLORE;14;100;juin-22;01/03/2023;01/03/2025;DIA1-0099171;
+7;FT HTB 71 B;422160058200M;ROUGE;16;200;oct-23;01/10/2024;01/10/2026;DIA1-0096555;
+8;FT HTB 71 B;982020 222080058100;ROUGE;8;50;oct-21;01/03/2023;01/03/2025;DIA1-0096554;
+9;FT HTB 71 B;982020 222080058100;ROUGE;8;50;oct-21;01/03/2023;01/03/2025;DIA1-0096553;
+10;FT HTB 220;982032 222135038200M;JAUNE;14;100;juil-19;01/03/2023;01/03/2025;DIA1-0096552;
+11;FT HTB 71 B;982020 222080058100;ROUGE;8;100;nov-21;01/03/2023;01/03/2025;DIA1-0096551;
+12;FT HTB 71 B;982035 222135538100M;BICOLORE;14;100;juin-22;01/03/2023;01/03/2025;DIA1-0096560;
+13;FT HTB 71 B;982035 222135538100M;JAUNE;14;200;juil-19;01/03/2023;01/03/2025;DIA3-0017479;
+14;FT HTB 71 B;982035 222135538100M;BICOLORE;14;100;juin-22;01/03/2023;01/03/2025;DIA1-0096559;
+15?;FT HTB 71 B;222135058300;ROUGE;14;50;janv-19;01/03/2023;01/03/2025;DIA3-0017480;
+16?;FT HTB 71 B;222135058300;ROUGE;14;50;janv-19;01/03/2023;01/03/2025;DIA3-0017481;
+PALAN 1;FT HTB 71 B;222135058100;ROUGE;14;100;juin-22;05/10/2023;01/03/2025;DIA1-0099623;
+PALAN 2;FT HTB 71 B;222135058100;ROUGE;14;100;juin-22;05/10/2023;01/03/2025;DIA1-0099615;`;
+
+        // Drag and Drop
+        const uploadZone = document.getElementById('uploadZone');
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const csvContent = e.target.result;
+                loadCSV(csvContent);
+                showNotification('✅ Fichier chargé avec succès!', 'success');
+                updateLastUpdate();
+            };
+            reader.readAsText(file);
+        }
+
+        function parseDate(dateStr) {
+            if (!dateStr || dateStr.trim() === '') return null;
+            const parts = dateStr.split('/');
+            if (parts.length !== 3) return null;
+            return new Date(parts[2], parts[1] - 1, parts[0]);
+        }
+
+        function calculateDaysRemaining(expirationDate) {
+            if (!expirationDate) return null;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const diffTime = expirationDate - today;
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        function getStatus(daysRemaining) {
+            if (daysRemaining === null) return 'unknown';
+            if (daysRemaining < 0) return 'expired';
+            if (daysRemaining <= 30) return 'warning';
+            return 'ok';
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'expired': '<span class="status-badge status-expired">⚠️ EXPIRÉ</span>',
+                'warning': '<span class="status-badge status-danger">🔴 URGENT</span>',
+                'ok': '<span class="status-badge status-ok">✅ OK</span>',
+                'unknown': '<span class="status-badge">-</span>'
+            };
+            return badges[status] || badges.unknown;
+        }
+
+        function loadCSV(csvContent) {
+            const lines = csvContent.trim().split('\n');
+            inventory = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(';');
+                if (values.length < 10) continue;
+                
+                const expirationDate = parseDate(values[8]);
+                const daysRemaining = calculateDaysRemaining(expirationDate);
+                
+                inventory.push({
+                    numero: values[0],
+                    numeroFT: values[1],
+                    serie: values[2],
+                    couleur: values[3],
+                    diametre: values[4],
+                    longueur: values[5],
+                    dateFab: values[6],
+                    miseEnService: values[7],
+                    expiration: values[8],
+                    expirationDate: expirationDate,
+                    codeMainta: values[9],
+                    daysRemaining: daysRemaining,
+                    status: getStatus(daysRemaining)
+                });
+            }
+            
+            updateStats();
+            renderTable();
+            checkAlerts();
+        }
+
+        function updateStats() {
+            const total = inventory.length;
+            const expired = inventory.filter(item => item.status === 'expired').length;
+            const warning = inventory.filter(item => item.status === 'warning').length;
+            const ok = inventory.filter(item => item.status === 'ok').length;
+            
+            document.getElementById('totalCordes').textContent = total;
+            document.getElementById('expirees').textContent = expired;
+            document.getElementById('prochaines30j').textContent = warning;
+            document.getElementById('okCordes').textContent = ok;
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('inventoryTable');
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            
+            let filteredInventory = inventory.filter(item => {
+                const matchesSearch = !searchTerm || 
+                    item.numero.toLowerCase().includes(searchTerm) ||
+                    item.numeroFT.toLowerCase().includes(searchTerm) ||
+                    item.serie.toLowerCase().includes(searchTerm) ||
+                    item.couleur.toLowerCase().includes(searchTerm) ||
+                    item.codeMainta.toLowerCase().includes(searchTerm);
+                
+                const matchesFilter = currentFilter === 'all' || item.status === currentFilter;
+                
+                return matchesSearch && matchesFilter;
+            });
+            
+            tbody.innerHTML = filteredInventory.map(item => `
+                <tr class="${item.status}">
+                    <td><strong>${item.numero}</strong></td>
+                    <td>${item.numeroFT}</td>
+                    <td>${item.serie}</td>
+                    <td><span style="display: inline-block; padding: 3px 8px; background: ${getColorBadge(item.couleur)}; border-radius: 5px; font-size: 0.85em;">${item.couleur}</span></td>
+                    <td>${item.diametre}</td>
+                    <td>${item.longueur}</td>
+                    <td>${item.dateFab}</td>
+                    <td>${item.miseEnService}</td>
+                    <td><strong>${item.expiration}</strong></td>
+                    <td><strong style="color: ${getDaysColor(item.daysRemaining)}">${item.daysRemaining !== null ? item.daysRemaining : '-'}</strong></td>
+                    <td>${getStatusBadge(item.status)}</td>
+                    <td>${item.codeMainta}</td>
+                </tr>
+            `).join('');
+        }
+
+        function getColorBadge(couleur) {
+            const colors = {
+                'ROUGE': '#fed7d7',
+                'JAUNE': '#fef5e7',
+                'BICOLORE': '#e0f7fa'
+            };
+            return colors[couleur] || '#e2e8f0';
+        }
+
+        function getDaysColor(days) {
+            if (days === null) return '#718096';
+            if (days < 0) return '#e53e3e';
+            if (days <= 30) return '#dd6b20';
+            return '#22543d';
+        }
+
+        function filterTable() {
+            renderTable();
+        }
+
+        function filterByStatus(status) {
+            currentFilter = status;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            renderTable();
+        }
+
+        function checkAlerts() {
+            const alertContainer = document.getElementById('alertContainer');
+            const itemsNeedingAlert = inventory.filter(item => 
+                item.daysRemaining !== null && item.daysRemaining > 0 && item.daysRemaining <= 30
+            );
+            
+            const expiredItems = inventory.filter(item => 
+                item.daysRemaining !== null && item.daysRemaining < 0
+            );
+            
+            let alertHTML = '';
+            
+            if (expiredItems.length > 0) {
+                alertHTML += `
+                    <div class="alert alert-danger">
+                        <strong>🚨 URGENT :</strong> ${expiredItems.length} corde(s) sont EXPIRÉES !
+                    </div>
+                `;
+            }
+            
+            if (itemsNeedingAlert.length > 0) {
+                alertHTML += `
+                    <div class="alert alert-info">
+                        <strong>⚠️ ATTENTION :</strong> ${itemsNeedingAlert.length} corde(s) expirent dans moins de 30 jours.
+                        ${autoSendEnabled ? 'Les emails ont été envoyés automatiquement.' : 'Activez l\'envoi automatique d\'emails.'}
+                    </div>
+                `;
+                
+                if (autoSendEnabled) {
+                    sendAlertEmails(itemsNeedingAlert);
+                }
+            }
+            
+            alertContainer.innerHTML = alertHTML;
+        }
+
+        function toggleAutoSend() {
+            autoSendEnabled = !autoSendEnabled;
+            const toggle = document.getElementById('autoSendToggle');
+            toggle.classList.toggle('active');
+            
+            showNotification(
+                autoSendEnabled ? '✅ Envoi automatique activé' : '⏸️ Envoi automatique désactivé',
+                autoSendEnabled ? 'success' : 'info'
+            );
+            
+            if (autoSendEnabled) {
+                checkAlerts();
+            }
+        }
+
+        function testEmail() {
+            const emails = getEmails();
+            
+            if (emails.length === 0) {
+                showNotification('❌ Veuillez entrer au moins une adresse email', 'error');
+                return;
+            }
+            
+            const itemsExpiring = inventory.filter(item => 
+                item.daysRemaining !== null && item.daysRemaining > 0 && item.daysRemaining <= 30
+            );
+            
+            const details = itemsExpiring.map(item => 
+                `N° ${item.numero} - ${item.numeroFT}\n` +
+                `  Couleur: ${item.couleur} | Diamètre: ${item.diametre}mm | Longueur: ${item.longueur}m\n` +
+                `  Expiration: ${item.expiration} | Jours restants: ${item.daysRemaining} jours\n` +
+                `  Code Mainta: ${item.codeMainta}\n`
+            ).join('\n');
+            
+            document.getElementById('emailStatus').innerHTML = `
+                <div class="alert alert-info">
+                    ⏳ Envoi en cours vers ${emails.length} destinataire(s)...
+                </div>
+            `;
+            
+            let successCount = 0;
+            let errorCount = 0;
+            
+            // Envoi à chaque destinataire
+            emails.forEach((email, index) => {
+                setTimeout(() => {
+                    emailjs.send("service_f0q5si9", "template_vcy6rlu", {
+                        to_email: email,
+                        nb_cordes: itemsExpiring.length,
+                        details_cordes: details,
+                        date_envoi: new Date().toLocaleString('fr-FR')
+                    }).then(
+                        () => {
+                            successCount++;
+                            console.log('✅ Email envoyé à', email);
+                            
+                            if (successCount + errorCount === emails.length) {
+                                updateEmailStatus(successCount, errorCount, emails, itemsExpiring.length);
+                            }
+                        },
+                        (error) => {
+                            errorCount++;
+                            console.error('❌ Erreur email:', error);
+                            
+                            if (successCount + errorCount === emails.length) {
+                                updateEmailStatus(successCount, errorCount, emails, itemsExpiring.length);
+                            }
+                        }
+                    );
+                }, index * 500); // Délai de 500ms entre chaque email
+            });
+        }
+        
+        function updateEmailStatus(successCount, errorCount, emails, nbCordes) {
+            const statusHTML = `
+                <div class="alert ${errorCount === 0 ? 'alert-success' : 'alert-info'}">
+                    ${errorCount === 0 ? '✅' : '⚠️'} <strong>Résultat de l'envoi :</strong><br>
+                    ${successCount > 0 ? `✅ ${successCount} email(s) envoyé(s) avec succès<br>` : ''}
+                    ${errorCount > 0 ? `❌ ${errorCount} échec(s)<br>` : ''}
+                    <strong>Destinataires :</strong> ${emails.join(', ')}<br>
+                    <strong>Nombre d'alertes :</strong> ${nbCordes} corde(s) < 30 jours
+                </div>
+            `;
+            document.getElementById('emailStatus').innerHTML = statusHTML;
+            
+            if (successCount > 0) {
+                showNotification(`✅ ${successCount} email(s) envoyé(s) !`, 'success');
+            }
+        }
+
+        function sendAlertEmails(items) {
+            const emails = getEmails();
+            if (emails.length === 0) return;
+            
+            const details = items.map(item => 
+                `N° ${item.numero} - ${item.numeroFT}\n` +
+                `  Couleur: ${item.couleur} | Diamètre: ${item.diametre}mm | Longueur: ${item.longueur}m\n` +
+                `  Expiration: ${item.expiration} | Jours restants: ${item.daysRemaining} jours\n` +
+                `  Code Mainta: ${item.codeMainta}\n`
+            ).join('\n');
+            
+            // Envoi à chaque destinataire
+            emails.forEach(email => {
+                emailjs.send("service_f0q5si9", "template_vcy6rlu", {
+                    to_email: email,
+                    nb_cordes: items.length,
+                    details_cordes: details,
+                    date_envoi: new Date().toLocaleString('fr-FR')
+                }).then(
+                    () => {
+                        console.log('✅ Email envoyé à', email);
+                        showNotification(`✅ Email envoyé à ${email}`, 'success');
+                    },
+                    (error) => {
+                        console.error('❌ Erreur email:', error);
+                        showNotification(`❌ Erreur envoi à ${email}`, 'error');
+                    }
+                );
+            });
+        }
+
+        function generateEmailContent(items) {
+            let content = `ALERTE EXPIRATION CORDES RTE
+========================
+
+⚠️ ATTENTION : ${items.length} corde(s) expirent dans moins de 30 jours !
+
+DÉTAILS DES CORDES EN ALERTE :
+`;
+            
+            items.forEach(item => {
+                content += `
+N° ${item.numero} - ${item.numeroFT}
+  • Couleur: ${item.couleur}
+  • Date d'expiration: ${item.expiration}
+  • Jours restants: ${item.daysRemaining} jours
+  • Code Mainta: ${item.codeMainta}
+`;
+            });
+            
+            content += `
+========================
+Ce message a été généré automatiquement par le système de gestion d'inventaire RTE.
+`;
+            
+            return content;
+        }
+
+        function getEmails() {
+            const emails = [];
+            for (let i = 1; i <= 6; i++) {
+                const email = document.getElementById('email' + i).value.trim();
+                if (email && email.includes('@')) {
+                    emails.push(email);
+                }
+            }
+            return emails;
+        }
+
+        function saveEmails() {
+            localStorage.setItem('rteEmails', JSON.stringify(getEmails()));
+            
+            // Validation visuelle
+            for (let i = 1; i <= 6; i++) {
+                const input = document.getElementById('email' + i);
+                if (input.value && input.value.includes('@')) {
+                    input.classList.add('valid');
+                } else {
+                    input.classList.remove('valid');
+                }
+            }
+        }
+
+        function loadSavedEmails() {
+            const saved = localStorage.getItem('rteEmails');
+            if (saved) {
+                const emails = JSON.parse(saved);
+                emails.forEach((email, index) => {
+                    const input = document.getElementById('email' + (index + 1));
+                    if (input) {
+                        input.value = email;
+                        input.classList.add('valid');
+                    }
+                });
+            }
+        }
+
+        function updateLastUpdate() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('fr-FR');
+            const dateString = now.toLocaleDateString('fr-FR');
+            document.getElementById('lastUpdate').textContent = `${dateString} à ${timeString}`;
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const content = document.getElementById('notificationContent');
+            
+            const icons = {
+                'success': '✅',
+                'error': '❌',
+                'info': 'ℹ️'
+            };
+            
+            const colors = {
+                'success': '#48bb78',
+                'error': '#e53e3e',
+                'info': '#4299e1'
+            };
+            
+            content.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="font-size: 2em;">${icons[type] || icons.info}</div>
+                    <div>
+                        <strong style="color: ${colors[type] || colors.info};">${message}</strong>
+                    </div>
+                </div>
+            `;
+            
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 4000);
+        }
+
+        // Auto-refresh toutes les 30 secondes
+        setInterval(() => {
+            if (inventory.length > 0) {
+                updateStats();
+                checkAlerts();
+            }
+        }, 30000);
+
+        // Initialisation
+        window.onload = function() {
+            loadCSV(defaultCSV);
+            loadSavedEmails();
+            updateLastUpdate();
+            showNotification('🚀 Système initialisé avec succès !', 'success');
+        };
+    </script>
+</body>
+</html>
